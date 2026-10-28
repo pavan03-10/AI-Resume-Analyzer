@@ -238,7 +238,7 @@ export default function Signup() {
                       id="signup-name"
                       type="text"
                       autoComplete="name"
-                      placeholder="Pavan Kumar"
+                      placeholder="Your Name"
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       className="w-full rounded-xl border border-slate-300 bg-white py-3.5 pl-12 pr-4 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
@@ -265,7 +265,7 @@ export default function Signup() {
                       id="signup-email"
                       type="email"
                       autoComplete="email"
-                      placeholder="you@example.com"
+                      placeholder="Your Email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       className="w-full rounded-xl border border-slate-300 bg-white py-3.5 pl-12 pr-4 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white"

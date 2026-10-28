@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, LogOut, UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,55 @@ import { supabase } from "@/lib/supabase";
 export default function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [userName, setUserName] = useState("User");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const getDisplayName = (user) => {
+      const metadata = user?.user_metadata || {};
+
+      return (
+        metadata.name?.trim() ||
+        metadata.full_name?.trim() ||
+        metadata.fullName?.trim() ||
+        metadata.display_name?.trim() ||
+        "User"
+      );
+    };
+
+    const loadUserName = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("Unable to load user name:", error.message);
+        return;
+      }
+
+      if (mounted) {
+        setUserName(getDisplayName(user));
+      }
+    };
+
+    loadUserName();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
+        setUserName(getDisplayName(session?.user));
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -56,7 +104,7 @@ export default function Navbar() {
             className="flex h-11 items-center gap-2 rounded-xl border-slate-300 bg-white px-4 text-slate-700 transition-all duration-300 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
           >
             <UserCircle2 className="h-5 w-5" />
-            <span className="hidden font-medium sm:block">Pavan</span>
+            <span className="hidden font-medium sm:block">{userName}</span>
           </Button>
 
           {isUserMenuOpen && (
