@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource/manrope/400.css";
+@import "@fontsource/manrope/500.css";
+@import "@fontsource/manrope/600.css";
+@import "@fontsource/manrope/700.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Manrope", sans-serif;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
