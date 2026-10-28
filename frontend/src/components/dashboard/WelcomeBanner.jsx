@@ -11,14 +11,72 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getAnalyses } from "@/services/resumeApi";
 import { fadeUp } from "@/lib/animations";
-
+import { supabase } from "@/lib/supabase";
 
 export default function WelcomeBanner() {
   const navigate = useNavigate();
 
+  const [userName, setUserName] = useState("User");
   const [averageATS, setAverageATS] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Get the name entered by the user during signup
+  useEffect(() => {
+    let mounted = true;
+
+    const getDisplayName = (user) => {
+      const metadata = user?.user_metadata || {};
+
+      const name =
+        metadata.name?.trim() ||
+        metadata.full_name?.trim() ||
+        metadata.fullName?.trim() ||
+        metadata.display_name?.trim() ||
+        "User";
+
+      return name;
+    };
+
+    const loadUserName = async () => {
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error) {
+          throw error;
+        }
+
+        if (mounted) {
+          setUserName(getDisplayName(user));
+        }
+      } catch (error) {
+        console.error("Failed to load user name:", error);
+
+        if (mounted) {
+          setUserName("User");
+        }
+      }
+    };
+
+    loadUserName();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+
+      setUserName(getDisplayName(session?.user));
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Load the average ATS score from saved analyses
   useEffect(() => {
     let mounted = true;
 
@@ -34,7 +92,9 @@ export default function WelcomeBanner() {
 
         const scores = analyses
           .map((item) => Number(item?.ats_score))
-          .filter(Number.isFinite);
+          .filter(
+            (score) => Number.isFinite(score) && score >= 0
+          );
 
         const average =
           scores.length > 0
@@ -48,10 +108,7 @@ export default function WelcomeBanner() {
           setAverageATS(average);
         }
       } catch (error) {
-        console.error(
-          "Failed to load welcome banner statistics:",
-          error
-        );
+        console.error("Failed to load average ATS score:", error);
 
         if (mounted) {
           setAverageATS(0);
@@ -70,19 +127,18 @@ export default function WelcomeBanner() {
     };
   }, []);
 
-
   return (
     <motion.div
       variants={fadeUp}
       className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 p-8 text-white shadow-2xl"
     >
-      {/* Decorative Background */}
+      {/* Decorative background */}
       <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
 
       <div className="absolute -bottom-24 left-0 h-56 w-56 rounded-full bg-fuchsia-400/20 blur-3xl" />
 
       <div className="relative flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left */}
+        {/* Welcome section */}
         <div className="max-w-3xl">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
             <Sparkles className="h-4 w-4" />
@@ -97,7 +153,7 @@ export default function WelcomeBanner() {
             <br />
 
             <span className="text-violet-100">
-              Pavan 👋
+              {userName} 👋
             </span>
           </h1>
 
@@ -114,7 +170,6 @@ export default function WelcomeBanner() {
               className="rounded-xl bg-white px-6 py-6 font-semibold text-violet-700 shadow-lg transition hover:scale-105 hover:bg-slate-100"
             >
               Analyze Resume
-
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
 
@@ -129,7 +184,7 @@ export default function WelcomeBanner() {
           </div>
         </div>
 
-        {/* Right Stats Card */}
+        {/* Average ATS score */}
         <motion.div
           whileHover={{ y: -6 }}
           transition={{ duration: 0.25 }}
@@ -158,7 +213,8 @@ export default function WelcomeBanner() {
           </div>
 
           <p className="mt-4 text-sm text-violet-100">
-            Your average ATS score is calculated from your saved resume analyses.
+            Your average ATS score is calculated from your saved
+            resume analyses.
           </p>
         </motion.div>
       </div>
